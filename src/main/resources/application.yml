@@ -1,0 +1,25 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: learnfl-backend
+  datasource:
+    url: jdbc:mysql://localhost:3306/learnfl?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+learnfl:
+  jwt:
+    # 生产环境请改用环境变量注入
+    secret: learnfl-backend-jwt-secret-key-please-change-in-production-0123456789
+    expire-days: 7
