@@ -9,9 +9,12 @@ import com.learnfl.dto.practice.PracticeSubmitRequest;
 import com.learnfl.dto.practice.PracticeSubmitResponse;
 import com.learnfl.dto.progress.ProgressVO;
 import com.learnfl.entity.*;
+import com.learnfl.mapper.LanguageMapper;
 import com.learnfl.mapper.PracticeRecordMapper;
 import com.learnfl.mapper.SentenceMapper;
 import com.learnfl.mapper.UserProgressMapper;
+import com.learnfl.mapper.WordBankMapper;
+import com.learnfl.mapper.WordGroupMapper;
 import com.learnfl.mapper.WordMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +35,9 @@ public class PracticeService {
     private final SentenceMapper sentenceMapper;
     private final PracticeRecordMapper practiceRecordMapper;
     private final UserProgressMapper userProgressMapper;
+    private final WordBankMapper wordBankMapper;
+    private final WordGroupMapper wordGroupMapper;
+    private final LanguageMapper languageMapper;
 
     /** 取练习词表（浏览分页与练习会话分离，一次取全） */
     public PracticeItemsResponse items(Long bankId, String mode, String order) {
@@ -56,10 +62,14 @@ public class PracticeService {
             List<Sentence> sentences = sentenceMapper.selectList(
                     new LambdaQueryWrapper<Sentence>().eq(Sentence::getWordBankId, bankId));
             totalCount = sentences.size();
+            // 按词库语言决定练习内容：日语词库打日文，英语词库打英文（缺失时回退另一语言）
+            boolean isJa = isJapaneseBank(bankId);
             items = sentences.stream().map(s -> {
                 PracticeItemVO vo = new PracticeItemVO();
                 vo.setId(s.getId());
-                vo.setText(s.getEnglish());
+                String primary = isJa ? s.getJapanese() : s.getEnglish();
+                String fallback = isJa ? s.getEnglish() : s.getJapanese();
+                vo.setText(primary != null ? primary : fallback);
                 vo.setPhonetic(null);
                 vo.setMeaning(s.getChinese());
                 vo.setExtra(s.getJapanese());
@@ -120,6 +130,16 @@ public class PracticeService {
 
         ProgressVO progress = updateProgress(userId, req.getBankId(), req.getMode(), req.getTotalWords());
         return new PracticeSubmitResponse(record.getId(), progress);
+    }
+
+    /** 判断词库是否属于日语（词库 → 词库组 → 语言） */
+    private boolean isJapaneseBank(Long bankId) {
+        WordBank bank = wordBankMapper.selectById(bankId);
+        if (bank == null) return false;
+        WordGroup group = wordGroupMapper.selectById(bank.getGroupId());
+        if (group == null) return false;
+        Language lang = languageMapper.selectById(group.getLanguageId());
+        return lang != null && "ja".equals(lang.getCode());
     }
 
     /** 查询某词库某模式进度 */
