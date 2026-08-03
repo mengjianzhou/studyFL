@@ -13,7 +13,12 @@ import com.learnfl.mapper.WordMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +26,7 @@ public class ContentService {
 
     private final WordMapper wordMapper;
     private final SentenceMapper sentenceMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 单词分页 */
     public PageResult<WordVO> words(Long bankId, long page, long size) {
@@ -48,6 +54,16 @@ public class ContentService {
             vo.setChinese(s.getChinese());
             vo.setJapanese(s.getJapanese());
             vo.setSentenceType(s.getSentenceType());
+            // 解析 segmentsJson → segments 列表
+            if (s.getSegmentsJson() != null && !s.getSegmentsJson().isBlank()) {
+                try {
+                    List<Map<String, String>> segments = objectMapper.readValue(
+                            s.getSegmentsJson(), new TypeReference<List<Map<String, String>>>() {});
+                    vo.setSegments(segments);
+                } catch (Exception e) {
+                    // JSON 解析失败时忽略，segments 保持 null
+                }
+            }
             return vo;
         }));
     }

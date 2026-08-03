@@ -25,7 +25,11 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +42,7 @@ public class PracticeService {
     private final WordBankMapper wordBankMapper;
     private final WordGroupMapper wordGroupMapper;
     private final LanguageMapper languageMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     /** 取练习词表（浏览分页与练习会话分离，一次取全） */
     public PracticeItemsResponse items(Long bankId, String mode, String order) {
@@ -70,9 +75,24 @@ public class PracticeService {
                 String primary = isJa ? s.getJapanese() : s.getEnglish();
                 String fallback = isJa ? s.getEnglish() : s.getJapanese();
                 vo.setText(primary != null ? primary : fallback);
-                vo.setPhonetic(null);
+                // 保留句子原始字段，编辑页需要区分英文翻译和切分单元中的罗马音。
+                vo.setEnglish(s.getEnglish());
+                vo.setChinese(s.getChinese());
+                vo.setJapanese(s.getJapanese());
+                // 兼容现有练习页：日语句子的 phonetic 仍提供原 english 字段。
+                vo.setPhonetic(isJa ? s.getEnglish() : null);
                 vo.setMeaning(s.getChinese());
                 vo.setExtra(s.getJapanese());
+                // 解析 segmentsJson → segments 列表
+                if (s.getSegmentsJson() != null && !s.getSegmentsJson().isBlank()) {
+                    try {
+                        List<Map<String, String>> segments = objectMapper.readValue(
+                                s.getSegmentsJson(), new TypeReference<List<Map<String, String>>>() {});
+                        vo.setSegments(segments);
+                    } catch (Exception ignored) {
+                        // JSON 解析失败时忽略
+                    }
+                }
                 return vo;
             }).collect(Collectors.toList());
         } else {

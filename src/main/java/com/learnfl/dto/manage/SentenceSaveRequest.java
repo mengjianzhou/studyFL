@@ -10,4 +10,6 @@ public class SentenceSaveRequest {
     private String chinese;
     private String japanese;
     private String sentenceType;
+    /** 切分单元 JSON 字符串，null 表示不修改切分 */
+    private String segmentsJson;
 }

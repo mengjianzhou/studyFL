@@ -20,5 +20,7 @@ public class Sentence {
     private String english;
     private String japanese;
     private String sentenceType;
+    /** 切分单元 JSON 数组，null 表示未切分（前端按空格/字符自动拆） */
+    private String segmentsJson;
     private LocalDateTime createdAt;
 }

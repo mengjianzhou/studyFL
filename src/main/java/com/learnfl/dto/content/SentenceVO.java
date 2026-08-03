@@ -11,4 +11,6 @@ public class SentenceVO {
     private String chinese;
     private String japanese;
     private String sentenceType;
+    /** 切分单元列表（已解析），null 表示未切分 */
+    private java.util.List<java.util.Map<String, String>> segments;
 }

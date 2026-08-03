@@ -133,6 +133,7 @@ public class ManagementService {
         sentence.setChinese(req.getChinese());
         sentence.setJapanese(req.getJapanese());
         sentence.setSentenceType(req.getSentenceType());
+        sentence.setSegmentsJson(req.getSegmentsJson());
         sentence.setCreatedAt(LocalDateTime.now());
         sentenceMapper.insert(sentence);
         return sentence;
@@ -147,6 +148,9 @@ public class ManagementService {
         sentence.setChinese(req.getChinese());
         sentence.setJapanese(req.getJapanese());
         sentence.setSentenceType(req.getSentenceType());
+        if (req.getSegmentsJson() != null) {
+            sentence.setSegmentsJson(req.getSegmentsJson());
+        }
         sentenceMapper.updateById(sentence);
         return sentence;
     }
