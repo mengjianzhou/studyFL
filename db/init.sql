@@ -151,21 +151,48 @@ CREATE TABLE `practice_record` (
 ) ENGINE = InnoDB COMMENT = '练习记录';
 
 -- ----------------------------
--- 单词掌握状态（错词重练，备用）
+-- 记忆复习规则（规则只允许新增和修改，不提供删除）
+-- ----------------------------
+DROP TABLE IF EXISTS `memory_rule`;
+CREATE TABLE `memory_rule` (
+  `id`                    BIGINT NOT NULL AUTO_INCREMENT,
+  `name`                  VARCHAR(100) NOT NULL,
+  `enabled`               TINYINT(1) NOT NULL DEFAULT 0,
+  `first_success_days`    INT NOT NULL DEFAULT 1,
+  `level1_success_count`  INT NOT NULL DEFAULT 3,
+  `level1_interval_days`  INT NOT NULL DEFAULT 14,
+  `level2_success_count`  INT NOT NULL DEFAULT 5,
+  `level2_interval_days`  INT NOT NULL DEFAULT 30,
+  `level3_success_count`  INT NOT NULL DEFAULT 10,
+  `level3_interval_days`  INT NOT NULL DEFAULT 360,
+  `failure_interval_days` INT NOT NULL DEFAULT 1,
+  `created_at`            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`            DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE = InnoDB COMMENT = '记忆复习规则';
+
+INSERT INTO `memory_rule` (`name`, `enabled`) VALUES ('默认记忆规则', 1);
+
+-- ----------------------------
+-- 用户单词记忆状态
 -- ----------------------------
 DROP TABLE IF EXISTS `user_word_status`;
 CREATE TABLE `user_word_status` (
-  `id`          BIGINT NOT NULL AUTO_INCREMENT,
-  `user_id`     BIGINT NOT NULL,
-  `word_id`     BIGINT DEFAULT NULL,
-  `sentence_id` BIGINT DEFAULT NULL,
-  `mode`        VARCHAR(10) NOT NULL,
-  `wrong_count` INT NOT NULL DEFAULT 0,
-  `done_count`  INT NOT NULL DEFAULT 0,
-  `updated_at`  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id`                  BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id`             BIGINT NOT NULL,
+  `word_id`             BIGINT NOT NULL,
+  `consecutive_success` INT NOT NULL DEFAULT 0,
+  `total_success`       INT NOT NULL DEFAULT 0,
+  `total_failure`       INT NOT NULL DEFAULT 0,
+  `last_result`         VARCHAR(10) DEFAULT NULL COMMENT 'SUCCESS / FAILURE',
+  `last_reviewed_at`    DATETIME DEFAULT NULL,
+  `next_review_date`    DATE DEFAULT NULL,
+  `created_at`          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`          DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_item` (`user_id`, `word_id`, `sentence_id`)
-) ENGINE = InnoDB COMMENT = '单词掌握状态（备用）';
+  UNIQUE KEY `uk_user_word` (`user_id`, `word_id`),
+  KEY `idx_user_next_review` (`user_id`, `next_review_date`)
+) ENGINE = InnoDB COMMENT = '用户单词记忆状态';
 
 -- ============================================
 -- 种子数据

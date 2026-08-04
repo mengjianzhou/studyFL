@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+import java.util.List;
+
 /** 练习提交请求 */
 @Data
 public class PracticeSubmitRequest {
@@ -26,4 +28,5 @@ public class PracticeSubmitRequest {
     private Long elapsedMs = 0L;
     private Boolean isDictation = false;
     private Integer dictationScore;
+    private List<PracticeItemResultRequest> itemResults;
 }
